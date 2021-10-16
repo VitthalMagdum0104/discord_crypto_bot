@@ -1,8 +1,12 @@
-import requests
-import discord
+import os
+
 from discord.ext import commands
+from pycoingecko import CoinGeckoAPI
+from dotenv import load_dotenv
 
 
+load_dotenv('.env', '')
+api_key = os.getenv('API_KEY', '')
 client = commands.Bot(command_prefix='!')
 
 
@@ -12,25 +16,11 @@ async def on_ready():
 
 
 @client.command()
-async def price(ctx):
-    url = "https://alpha-vantage.p.rapidapi.com/query"
+async def price(ctx, symbol, currency):
+    coinGecko_client = CoinGeckoAPI()
+    rate = coinGecko_client.get_price(
+        ids=['bitcoin', 'litecoin', 'ethereum'], vs_currencies=['usd', 'eur'])
+    await ctx.send(f'{symbol} in {currency}: {rate[symbol][currency]}')
 
-    querystring = {
-        "from_currency": "BTC",
-        "function": "CURRENCY_EXCHANGE_RATE",
-        "to_currency": "INR"
-    }
 
-    headers = {
-        'x-rapidapi-key': "0b57da549bmshd45808ec9a14981p1ea4d6jsn08d8d2edba0d",
-        'x-rapidapi-host': "alpha-vantage.p.rapidapi.com"
-    }
-
-    response = requests.request(
-        "GET", url, headers=headers, params=querystring)
-    rate = response.json()[
-        'Realtime Currency Exchange Rate']['5. Exchange Rate']
-
-    await ctx.send(f'Bitcoin Exchange Rate in INR: {rate}')
-
-client.run('ODk3NzYzNjM3MjkxMjUzNzYx.YWaZig.xRAgcoJUMjZgvnELu9ogua3ztRk')
+client.run(api_key)
